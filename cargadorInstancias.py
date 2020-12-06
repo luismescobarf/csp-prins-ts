@@ -37,17 +37,17 @@ def beasley(ruta):
                 
                 #Si es la primera línea realizar capturas correpsondientes
                 if not(contadorLineas):
-                   instancia['numBloques'], instancia['minutosJornada'] = linea_n[0], linea_n[1]  
+                   instancia['numBloques'], instancia['minutosJornada'] = int(linea_n[0]), int(linea_n[1])  
                 else:
                     #Diferenciar si se están cargando los bloques
-                    if contadorLineas <= int(instancia['numBloques']):                        
+                    if contadorLineas <= instancia['numBloques']:                        
                         instancia['bloques'].append( { 't0':int(linea_n[0]), 'tf':int(linea_n[1]), 'duracion':int(linea_n[1]) - int(linea_n[0]) } )
                     #Si se están cargando las transiciones
-                    elif contadorLineas > int(instancia['numBloques']):
+                    elif contadorLineas > instancia['numBloques']:
                         instancia['transiciones'].append({
                                 
-                             'i': int(linea_n[0])-1,
-                             'j': int(linea_n[1])-1,
+                             'i': int(linea_n[0]),
+                             'j': int(linea_n[1]),
                              'costo': int(linea_n[2])
                                 
                             })
@@ -69,9 +69,33 @@ def beasley(ruta):
     #Generar la matriz de costos y de tiempos de transición
     #La matriz de tiempo facilita la consulta de factibilidad
     
-    #[[7]*3]*3
+    #Inicializar matriz de costos
+    dimension = instancia['numBloques']+1
+    instancia['matrizCostos'] = np.array([ [M] * dimension ] * dimension )
+    instancia['matrizCostos'][0] = instancia['mayorCostoReactivo']    
+    instancia['matrizCostos'][:,0] = 0
+    instancia['matrizCostos'][0,0] = M
     
+    #Inicializar matriz de transiciones
+    instancia['matrizTiemposTransicion'] = np.array([ [M] * dimension ] * dimension )
+    instancia['matrizTiemposTransicion'][0] = 0    
+    instancia['matrizTiemposTransicion'][:,0] = 0
+    instancia['matrizTiemposTransicion'][0,0] = M
     
+    #Reflejar en las matrices las transiciones (costo y tiempo transcurrido)
+    for transicion in instancia['transiciones']:
+        
+        #Bloques de la transición
+        desde = transicion['i']
+        hasta = transicion['j']
+        
+        #Reflejar en la matriz de costos
+        instancia['matrizCostos'][desde][hasta] = transicion['costo']
+        
+        #Reflejar tiempo de transición o espacio entre tareas 
+        #*Consumen tiempo del trabajador y agotan el recurso que en este caso es la jornada
+        instancia['matrizTiemposTransicion'][desde][hasta] = instancia['bloques'][hasta-1]['t0'] - instancia['bloques'][desde-1]['tf']  
+    	       
     
     #Retornar la instancia que se ha cargado
     return instancia 
@@ -85,14 +109,15 @@ instancia = beasley('./instances/csp50.txt')
 print('Bloques:')
 for bloque in instancia['bloques']:
     print(bloque)
+del bloque
     
 print('Transiciones:')
 for transicion in instancia['transiciones']:
     print(transicion)
-			 
+del transicion	 
 
 
-
+"""
 //Redimensionar matriz de costos y asignar un costo prohibitivo a todas las transiciones
 matrizCostosBeasley.resize(num+2);
 matrizTiempoTransiciones.resize(num+2);//Reflejar dimensionalidad en la matriz de tiempos de transición
@@ -139,6 +164,7 @@ for(size_t i=0;i<listadoTransicionesPermitidasBeasley.size();++i){
 	//Reflejar la transición permitida en el tiempo que consume cambiar de tarea
 	matrizTiempoTransiciones[desde][hasta] = this->listadoServiciosBeasley[hasta].t0- this->listadoServiciosBeasley[desde].tf;
 
-}								
+}
+"""								
 
 
