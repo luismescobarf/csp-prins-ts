@@ -1,19 +1,23 @@
-#Función para cargar instancias csp
-def beasley(ruta):
+#Librerías
+import pprint as pp
+import numpy as np
+
+#Función para cargar instancias csp propuestas por (Beasley, 96)
+def beasley(ruta):   
     
-    
-    #Preparación del contenedor tipo diccionario de la instancia
+    #Preparación del contenedor tipo diccionario que recibirá la lectura del archivo instancia
     instancia = {}
+    instancia['nombreInstancia'] = str(ruta)#Nombre del caso de la librería
+    instancia['numBloques'] = int()#Total de bloques o servicios
+    instancia['minutosJornada'] = int()#Duración total de la jornada en minutos
     instancia['bloques'] = [] #Listado de diccionarios de bloques de trabajo o servicios
+    instancia['transiciones'] = []#Listado de diccionarios de transiciones entre bloques o servicios
+    instancia['matrizCostos'] = []#Matriz con los costos de transición
+    instancia['mayorCostoReactivo'] = 0#Costo reactivo para generar el costo de salida de cada nuevo operador en los turnos
+    instancia['matrizTiemposTransicion'] = []#Matriz para facilitar la consulta de factibilidad
     
-    
-    
-    nombreCaso = str()
-    arcos = tuple()
-    
-    
-    
-    
+    #Valor grande para costos prohibitivos
+    M = 100000000      
     
     #Intentar abrir el archivo 
     try:
@@ -22,116 +26,72 @@ def beasley(ruta):
         with open(ruta) as manejadorArchivo: 
             
             #Contador de líneas
-            contadorLineas = 0
-            
+            contadorLineas = 0           
          
-            coordenadasPuntos = []
-            for linea_n in manejadorArchivo: 
-                if not(contadorLineas):
-                    pass
+            #Recorrer cada línea
+            for linea_n in manejadorArchivo:
                 
-                
-                
+                #Cargar línea, limpiar caracteres especiales y volverlo un arreglo
                 linea_n = linea_n.strip()
-                linea_n = linea_n.split(' ')     
-                coordenadasPuntos.append( [ int(linea_n[0]), float(linea_n[1]), float(linea_n[2]) ] )
+                linea_n = linea_n.split(' ')
+                
+                #Si es la primera línea realizar capturas correpsondientes
+                if not(contadorLineas):
+                   instancia['numBloques'], instancia['minutosJornada'] = linea_n[0], linea_n[1]  
+                else:
+                    #Diferenciar si se están cargando los bloques
+                    if contadorLineas <= int(instancia['numBloques']):                        
+                        instancia['bloques'].append( { 't0':int(linea_n[0]), 'tf':int(linea_n[1]), 'duracion':int(linea_n[1]) - int(linea_n[0]) } )
+                    #Si se están cargando las transiciones
+                    elif contadorLineas > int(instancia['numBloques']):
+                        instancia['transiciones'].append({
+                                
+                             'i': int(linea_n[0])-1,
+                             'j': int(linea_n[1])-1,
+                             'costo': int(linea_n[2])
+                                
+                            })
+                        
+                        #Burbuja para calcular el mayor costo reactivo
+                        if instancia['transiciones'][-1]['costo'] > instancia['mayorCostoReactivo']:
+                            instancia['mayorCostoReactivo'] = instancia['transiciones'][-1]['costo']
+                        
+                                      
+                #Diferenciar la primera línea
+                contadorLineas += 1              
             
     except:
-        return 'Error en la carga del archivo CSP!!'
-
+         return 'Error en la carga del archivo CSP!!'  
+    
+    #Incrementar el costo reactivo para diferenciarlo de las transiciones internas
+    instancia['mayorCostoReactivo'] = instancia['mayorCostoReactivo'] * 2
+    
+    #Generar la matriz de costos y de tiempos de transición
+    #La matriz de tiempo facilita la consulta de factibilidad
+    
+    #[[7]*3]*3
     
     
     
-    return instancia
-               
-                
-    
+    #Retornar la instancia que se ha cargado
+    return instancia 
        
     
-    
-    
-    
-    
-
-
 #Llamados de diagnóstico
+#-----------------------
+instancia = beasley('./instances/csp50.txt')	
+
+#Organizar salida en pantalla
+print('Bloques:')
+for bloque in instancia['bloques']:
+    print(bloque)
+    
+print('Transiciones:')
+for transicion in instancia['transiciones']:
+    print(transicion)
+			 
 
 
-
-				 
-
-/////////////////////
-// Lectura de datos//
-/////////////////////
-
-
-//Mostrar en pantalla la variante que se está trabajando
-cout<<endl<< "-- Repositorio Beasley 96 -- " <<endl;
-cout<< "----------------------------- " <<endl;
-					
-//Nombre de la instancia
-nombreArchivo = testname;
-cout<<endl<<"Nombre del archivo -> "<<testname;//getchar();					
-
-//Total de servicios o eventos
-data_input >> num;
-cout<<endl<<"Total de servicios -> "<<num;//getchar();
-
-//Duración total de los turnos en minutos
-data_input >> ht;
-cout<<endl<<"Duración máxima en minutos de un turno -> "<<ht;//getchar();
-
-//Servicio sin duración (asociado al depósito)						
-servicio servicioDeposito;										
-servicioDeposito.t0 = 0;					
-servicioDeposito.tf = 0;
-servicioDeposito.duracion = 0;					
-listadoServiciosBeasley.push_back(servicioDeposito);
-
-//Realizar la carga de cada uno de los servicios de la instancia
-for(size_t i=0;i<num;++i){
-	//Contenedor auxiliar	
-	servicio servicioAuxiliar;
-	//Hora de inicio en minutos						
-	data_input >> servicioAuxiliar.t0;
-	//Hora de finalización en minutos
-	data_input >> servicioAuxiliar.tf;
-	servicioAuxiliar.duracion = servicioAuxiliar.tf - servicioAuxiliar.t0;
-	
-	//Descargar el servicio en el contenedor
-	listadoServiciosBeasley.push_back(servicioAuxiliar);
-
-}//Terminación de la carga de servicios
-
-//Almacenar las transiciones posibles (número indeterminado, hasta finalizar el archivo)
-while (!data_input.eof()) {				
-
-	//Contenedor auxiliar de transición
-	transicion transicionAuxiliar;
-	//Desde qué servicio
-	data_input >> transicionAuxiliar.i;
-	//Ajuste para que coincida con los subíndeces de los contenedores
-	//--transicionAuxiliar.i;
-	//Hacia cuál servicio
-	data_input >> transicionAuxiliar.j;
-	//Ajuste para que coincida con los subíndeces de los contenedores
-	//--transicionAuxiliar.j;
-	//Costo de la transición
-	data_input >> transicionAuxiliar.costoTransicion;
-	//Actualizar burbuja reactiva de costos
-	if(transicionAuxiliar.costoTransicion > mayorCostoReactivo){
-		mayorCostoReactivo = transicionAuxiliar.costoTransicion;						
-	}
-
-	//Parar si se ha alcanzado el final del archivo después de la última carga
-	if(data_input.eof() ){
-		break;						
-	}
-
-	//Adicionar al atributo multivalor correspondiente en la instancia
-	listadoTransicionesPermitidasBeasley.push_back(transicionAuxiliar);
-							
-}//Terminación de la carga de transiciones posibles
 
 //Redimensionar matriz de costos y asignar un costo prohibitivo a todas las transiciones
 matrizCostosBeasley.resize(num+2);
@@ -181,38 +141,4 @@ for(size_t i=0;i<listadoTransicionesPermitidasBeasley.size();++i){
 
 }								
 
-//Cerrar el archivo desde donde se está cargando la instancia
-data_input.close();					
 
-//Salida en pantalla de validación
-cout<<endl;
-cout<<"Cantidad de Servicios: "<<listadoServiciosBeasley.size()<<endl;	
-cout<<endl;
-
-cout<<endl;
-cout<<"Cantidad de Transiciones Permitidas: "<<listadoTransicionesPermitidasBeasley.size()<<endl;	
-cout<<endl;										
-
-////Mostrar los servicios almacenados
-//cout<<"Servicios Capturados: "<<endl;
-//for(size_t i = 0;i<listadoServiciosBeasley.size();++i){
-//	cout<<i<<":"<<" t0 = "<<listadoServiciosBeasley[i].t0<<" tf = "<<listadoServiciosBeasley[i].tf<<" duracion = "<<listadoServiciosBeasley[i].duracion<<endl;										
-//}
-
-////Mostrar las transiciones permitidas
-//cout<<"Transiciones Permitidas: "<<endl;
-//for(size_t i = 0;i<listadoTransicionesPermitidasBeasley.size();++i){
-//	cout<<i<<":"<<" i = "<<listadoTransicionesPermitidasBeasley[i].i<<" tf = "<<listadoTransicionesPermitidasBeasley[i].j<<" costo = "<<listadoTransicionesPermitidasBeasley[i].costoTransicion<<endl;										
-//}
-
-////Mostrar matriz de costos generada
-//cout<<endl;
-//for(size_t i=0;i<num+2;++i){						
-//	for(size_t j=0;j<num+2;++j){							
-//		cout<<matrizCostosBeasley[i][j]<<" ";
-//	}
-//	cout<<endl;
-//}
-
-//Parar ejecución para visualzar salida en terminal	
-//getchar();
