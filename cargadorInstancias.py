@@ -103,6 +103,7 @@ def beasley(ruta):
     
 #Llamados de diagnóstico
 #-----------------------
+"""
 instancia = beasley('./instances/csp50.txt')	
 
 #Organizar salida en pantalla
@@ -114,9 +115,10 @@ del bloque
 print('Transiciones:')
 for transicion in instancia['transiciones']:
     print(transicion)
-del transicion	 
+del transicion
+""" 
 
-
+#Matrices cargador versión C++
 """
 //Redimensionar matriz de costos y asignar un costo prohibitivo a todas las transiciones
 matrizCostosBeasley.resize(num+2);
