@@ -6,7 +6,6 @@ import bellmanford as bf
 import matplotlib.pyplot as plt
 import cargadorInstancias as ci
 
-
 #Función para encontrar el camino más corto del digrafo de itinerarios
 def spBellmanFord(instancia, productores, receptores, pesos):   
     
@@ -25,61 +24,30 @@ def spBellmanFord(instancia, productores, receptores, pesos):
     M = 100000000      
     
     #Generar el grafo a partir de los vectores de entrada    
-    instancia['numBloques'] = 6#Solo para el ejemplo de Prins
-    matrizAdyacencia = np.array([ [0] * instancia['numBloques'] ] * instancia['numBloques'] )
-    arcos = tuple(zip(productores,receptores))
-    i = 0
-    for arco in arcos:
-       matrizAdyacencia[arco] =  pesos[i]
-       i += 1   
-    #Construir nuestro grafo en networkx
-    rows, cols = np.where(matrizAdyacencia > 0)
-    edges = zip(rows.tolist(), cols.tolist())
-    gr = nx.DiGraph()
-    gr.add_edges_from(edges)
-    nx.draw(gr, labels=diccionarioEtiquetas, with_labels=True, arrowsize=30) 
-    plt.show() 
-    
-    
-    G=nx.from_numpy_matrix(npMatrizAdyacencia)
-    nx.draw(G, labels=diccionarioEtiquetas, with_labels=True, arrowsize=30) 
-    plt.show() 
-    
-    
-    
-    
+    #instancia['numBloques'] = 5 #Forzar solo para el ejemplo de Prins
+    pesos = list(map(lambda x:{'weight':x},pesos))
+    arcos = list(zip(productores,receptores,pesos))   
+    G = nx.DiGraph()
+    G.add_edges_from(arcos)
+    #Dibujado de diagnóstico
+    #nx.draw(G, with_labels=True, arrowsize=30) 
+    #plt.show()    
+    shortest_path = bf.bellman_ford(G, source=0, target=instancia['numBloques'])
+    funcionObjetivo = shortest_path[0]   
     
     #Retornar el costo del camino más corto
-    #return instancia 
+    return funcionObjetivo 
        
     
 #Llamados de diagnóstico
 #-----------------------
 
 #Carga de instancia
-instancia = ci.beasley('./instances/csp50.txt')
+#instancia = ci.beasley('./instances/csp50.txt')
 
 #Ejemplo alternativo (Prins, 04)
-productores = [0 ,0 ,1 ,1 ,1  ,2 ,2 ,3 ,3 , 4]
-receptores  = [1 ,2 ,2 ,3 ,4  ,3 ,4 ,4 ,5 , 5]
-pesos       = [40,55,50,85,120,60,95,80,90,70]
+#productores = [0 ,0 ,1 ,1 ,1  ,2 ,2 ,3 ,3 , 4]
+#receptores  = [1 ,2 ,2 ,3 ,4  ,3 ,4 ,4 ,5 , 5]
+#pesos       = [40,55,50,85,120,60,95,80,90,70]
 
-spBellmanFord(instancia, productores, receptores, pesos)   
-	
-
-"""
-instancia = beasley('./instances/csp50.txt')	
-
-#Organizar salida en pantalla
-print('Bloques:')
-for bloque in instancia['bloques']:
-    print(bloque)
-del bloque
-    
-print('Transiciones:')
-for transicion in instancia['transiciones']:
-    print(transicion)
-del transicion
-""" 					
-
-
+#spBellmanFord(instancia, productores, receptores, pesos)
